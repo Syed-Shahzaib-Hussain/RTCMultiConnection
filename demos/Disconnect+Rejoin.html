@@ -1,3 +1,5 @@
+<!-- Demo version: 2017.08.06 -->
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -80,9 +82,10 @@
         </section>
 
         <script src="/dist/RTCMultiConnection.min.js"></script>
+        <script src="/node_modules/webrtc-adapter/out/adapter.js"></script>
         <script src="/socket.io/socket.io.js"></script>
 
-        <script src="https://cdn.webrtc-experiment.com:443/FileBufferReader.js"></script>
+        <script src="/node_modules/fbr/FileBufferReader.js"></script>
 
         <script>
             // ......................................................
@@ -158,6 +161,8 @@
             // ......................................................
 
             var connection = new RTCMultiConnection();
+
+            connection.autoCloseEntireSession = false;
 
             // by default, socket.io server is assumed to be deployed on your own URL
             connection.socketURL = '/';

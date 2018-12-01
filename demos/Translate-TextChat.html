@@ -1,3 +1,5 @@
+<!-- Demo version: 2017.08.06 -->
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -6,9 +8,9 @@
     <meta charset="utf-8">
     <link rel="stylesheet" href="https://cdn.webrtc-experiment.com/style.css">
 
-    <title>getPublicModerators using RTCMultiConnection</title>
+    <title>TextChat Translation using RTCMultiConnection</title>
 
-    <meta name="description" content="Get List of all Public Rooms using RTCMultiConnection" />
+    <meta name="description" content="Many-to-Many TextChat Translation using RTCMultiConnection" />
     <meta name="keywords" content="WebRTC,RTCMultiConnection,Demos,Experiments,Samples,Examples" />
 
     <style>
@@ -32,6 +34,11 @@
             text-align: center;
             padding: 5px 10px;
         }
+
+        select {
+            height: 25px;
+            vertical-align: middle;
+        }
     </style>
 </head>
 
@@ -39,7 +46,7 @@
     <article>
 
         <header style="text-align: center;">
-            <h1>getPublicModerators using RTCMultiConnection</h1>
+            <h1>TextChat Translation using RTCMultiConnection</h1>
             <p>
                 <a href="https://rtcmulticonnection.herokuapp.com/">HOME</a>
                 <span> &copy; </span>
@@ -57,52 +64,133 @@
         <section class="experiment">
             <div class="make-center">
                 <input type="text" id="room-id" value="abcdef">
-                <button id="open-public-room">Open Public Room</button>
-                <button id="open-private-room">Open Private Room</button>
-                <button id="become-public-moderator" disabled>Become Public Moderator</button>
-
-                <div id="room-urls" style="text-align: center;display: none;background: #F1EDED;margin: 15px -10px;border: 1px solid rgb(189, 189, 189);border-left: 0;border-right: 0;"></div>
+                <button id="open-room">Open Room</button>
+                <button id="join-room">Join Room</button>
+                <button id="open-or-join-room">Auto Open Or Join Room</button>
 
                 <br><br>
-                <h2>List of all public moderators:</h2>
-                <ol id="public-rooms" style="text-align:left;"></ol>
+                <input type="text" id="input-text-chat" placeholder="Enter Text Chat" disabled>
+
+                <select id="select-your-langauge">
+                                        <option>en (English)</option>
+                                        <option>ar (العربية)</option>
+                                        <option>de (Deutsch)</option>
+                                        <option>fr (Français)</option>
+                                        <option>hi (हिंदी)</option>
+                                        <option>pt (Português)</option>
+                                        <option>ru (Русский)</option>
+                                        <option>es (Español)</option>
+                                        <option>tr (Türk)</option>
+                                        <option>nl (Nederlands)</option>
+                                        <option>it (Italiano)</option>
+                                        <option>pl (Polski)</option>
+                                        <option>ro (Român)</option>
+                                        <option>sv (Svensk)</option>
+                                        <option>vi (Việt)</option>
+                                        <option>th (ภาษาไทย)</option>
+                                        <option>zh-CN (中文简体)</option>
+                                        <option>zh-TW (中國傳統)</option>
+                                        <option>ko (한국의)</option>
+                                        <option>ja (日本人)</option>
+                                        <option>el (ελληνικά)</option>
+                                        <option>ts (தமிழ்)</option>
+                                        <option>hy (հայերեն)</option>
+                                        <option>bs (Bosanski)</option>
+                                        <option>ca (Català)</option>
+                                        <option>hr (Hrvatski)</option>
+                                        <option>dq (Dansk)</option>
+                                        <option>eo (Esperanto)</option>
+                                        <option>fi (Suomalainen)</option>
+                                        <option>ht (Haian kreyòl)</option>
+                                        <option>hu (Magyar)</option>
+                                        <option>is (Icelandic)</option>
+                                        <option>id (Indonesia)</option>
+                                        <option>la (Latinum)</option>
+                                        <option>lv (Latvijas)</option>
+                                        <option>mk (Македонски)</option>
+                                        <option>no (Norsk)</option>
+                                        <option>sr (Српски)</option>
+                                        <option>sk (Slovenský)</option>
+                                        <option>sw (Kiswahili)</option>
+                                        <option>cy (Cymraeg)</option>
+                                    </select>
+
+                <div id="room-urls" style="text-align: center;display: none;background: #F1EDED;margin: 15px -10px;border: 1px solid rgb(189, 189, 189);border-left: 0;border-right: 0;"></div>
             </div>
 
-            <div id="videos-container"></div>
+            <div id="chat-container">
+                <div class="chat-output"></div>
+            </div>
         </section>
 
         <script src="/dist/RTCMultiConnection.min.js"></script>
+        <script src="/node_modules/webrtc-adapter/out/adapter.js"></script>
         <script src="/socket.io/socket.io.js"></script>
+
+        <script src="/node_modules/fbr/FileBufferReader.js"></script>
 
         <script>
             // ......................................................
             // .......................UI Code........................
             // ......................................................
 
-            document.getElementById('open-public-room').onclick = function() {
+            document.getElementById('open-room').onclick = function() {
                 disableInputButtons();
-
-                var isPublicModerator = true;
-                connection.open(document.getElementById('room-id').value, isPublicModerator);
-
-                showRoomURL(document.getElementById('room-id').value);
+                connection.open(document.getElementById('room-id').value, function() {
+                    showRoomURL(connection.sessionid);
+                });
             };
 
-            document.getElementById('open-private-room').onclick = function() {
+            document.getElementById('join-room').onclick = function() {
                 disableInputButtons();
-
-                var isPublicModerator = false;
-                connection.open(document.getElementById('room-id').value, isPublicModerator);
-                document.getElementById('become-public-moderator').disabled = false;
-
-                showRoomURL(document.getElementById('room-id').value);
+                connection.join(document.getElementById('room-id').value);
             };
 
-            document.getElementById('become-public-moderator').onclick = function() {
-                this.disabled = true;
-
-                connection.becomePublicModerator();
+            document.getElementById('open-or-join-room').onclick = function() {
+                disableInputButtons();
+                connection.openOrJoin(document.getElementById('room-id').value, function(isRoomExists, roomid) {
+                    if(!isRoomExists) {
+                        showRoomURL(roomid);
+                    }
+                });
             };
+
+            // ......................................................
+            // .....................TextChat Code....................
+            // ......................................................
+
+            document.getElementById('input-text-chat').onkeyup = function(e) {
+                if (e.keyCode != 13) return;
+
+                // removing trailing/leading whitespace
+                this.value = this.value.replace(/^\s+|\s+$/g, '');
+                if (!this.value.length) return;
+
+                connection.send(this.value);
+                appendDIV(this.value);
+                this.value = '';
+            };
+
+            var chatContainer = document.querySelector('.chat-output');
+
+            function appendDIV(event) {
+                console.log('appendDIV', event);
+
+                if(event.data) {
+                    connection.Translator.TranslateText(event.data, function(convertedText) {
+                         appendDIV(convertedText);
+                    });
+                    return;
+                }
+
+                var div = document.createElement('div');
+                div.innerHTML = event.data || event;
+                chatContainer.insertBefore(div, chatContainer.firstChild);
+                div.tabIndex = 0;
+                div.focus();
+
+                document.getElementById('input-text-chat').focus();
+            }
 
             // ......................................................
             // ..................RTCMultiConnection Code.............
@@ -116,63 +204,27 @@
             // comment-out below line if you do not have your own socket.io server
             // connection.socketURL = 'https://rtcmulticonnection.herokuapp.com:443/';
 
-            connection.socketMessageEvent = 'getPublicModerators-demo';
+            connection.socketMessageEvent = 'textchat-translation-demo';
 
             connection.session = {
-                audio: true,
-                video: true
+                data: true
             };
 
             connection.sdpConstraints.mandatory = {
-                OfferToReceiveAudio: true,
-                OfferToReceiveVideo: true
+                OfferToReceiveAudio: false,
+                OfferToReceiveVideo: false
             };
 
-            connection.videosContainer = document.getElementById('videos-container');
-            connection.onstream = function(event) {
-                connection.videosContainer.appendChild(event.mediaElement);
-                event.mediaElement.play();
-                setTimeout(function() {
-                    event.mediaElement.play();
-                }, 5000);
+            connection.onmessage = appendDIV;
+
+            connection.onopen = function() {
+                document.getElementById('input-text-chat').disabled = false;
             };
-
-            var publicRoomsDiv = document.getElementById('public-rooms');
-            (function looper() {
-                // connection.getPublicModerators(startsWith, callback)
-                connection.getPublicModerators(function(array) {
-                    publicRoomsDiv.innerHTML = '';
-                    array.forEach(function(moderator) {
-                        // moderator.userid
-                        // moderator.extra
-                        if(moderator.userid == connection.userid) return; // if owner himself
-
-                        var li = document.createElement('li');
-                        li.innerHTML = '<b>' + moderator.userid + '</b>&nbsp;&nbsp;';
-
-                        var button = document.createElement('button');
-                        button.id = moderator.userid;
-                        button.onclick = function() {
-                            this.disabled = true;
-                            connection.join(this.id);
-                        };
-                        button.innerHTML = 'Join this room';
-                        li.appendChild(button);
-
-                        if(moderator.userid == connection.sessionid) {
-                            // if already connected with same moderator
-                            button.disabled = true;
-                        }
-
-                        publicRoomsDiv.insertBefore(li, publicRoomsDiv.firstChild);
-                    });
-                    setTimeout(looper, 3000);
-                });
-            })();
 
             function disableInputButtons() {
-                document.getElementById('open-public-room').disabled = true;
-                document.getElementById('open-private-room').disabled = true;
+                document.getElementById('open-or-join-room').disabled = true;
+                document.getElementById('open-room').disabled = true;
+                document.getElementById('join-room').disabled = true;
                 document.getElementById('room-id').disabled = true;
             }
 
@@ -248,6 +300,25 @@
 
                 disableInputButtons();
             }
+
+            // Translation Handler
+            connection.googKey = 'AIzaSyCgB5hmFY74WYB-EoWkhr9cAGr6TiTHrEE';
+            connection.autoTranslateText = false;
+            
+            var selectYourLanguage = document.getElementById('select-your-langauge');
+            connection.language = selectYourLanguage.value.split(' (')[0];
+            selectYourLanguage.onchange = function() {
+                connection.language = this.value.split(' (')[0];
+            };
+
+            connection.Translator.getListOfLanguages(function(languages) {
+                selectYourLanguage.innerHTML = '';
+                languages.forEach(function(language) {
+                    var option = document.createElement('option');
+                    option.innerHTMl = language.language;
+                    selectYourLanguage.appendChild(option);
+                });
+            });
         </script>
 
         <section class="experiment own-widgets latest-commits">

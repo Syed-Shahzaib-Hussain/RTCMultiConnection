@@ -1,3 +1,5 @@
+<!-- Demo version: 2017.08.06 -->
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -93,14 +95,17 @@
         </section>
 
         <script src="/dist/RTCMultiConnection.min.js"></script>
+        <script src="/node_modules/webrtc-adapter/out/adapter.js"></script>
         <script src="/socket.io/socket.io.js"></script>
 
-        <script src="https://cdn.webrtc-experiment.com:443/FileBufferReader.js"></script>
+        <script src="/node_modules/fbr/FileBufferReader.js"></script>
 
         <!-- custom layout for HTML5 audio/video elements -->
         <script src="https://cdn.webrtc-experiment.com/getMediaElement.js"></script>
 
         <script>
+            var connection = new RTCMultiConnection(); // to get window.DetectRTC object
+            
             // ......................................................
             // .......................UI Code........................
             // ......................................................
@@ -145,13 +150,13 @@
 
                         try {
                             if('captureStream' in video) {
-                                connection.preRecorededStream = video.captureStream(15);
+                                connection.preRecorededStream = video.captureStream();
                             }
                             else if('mozCaptureStream' in video) {
-                                connection.preRecorededStream = video.mozCaptureStream(15);
+                                connection.preRecorededStream = video.mozCaptureStream();
                             }
                             else if('webkitCaptureStream' in video) {
-                                connection.preRecorededStream = video.webkitCaptureStream(15);
+                                connection.preRecorededStream = video.webkitCaptureStream();
                             }
                         }
                         catch(e) {
@@ -163,13 +168,18 @@
                             return;
                         }
 
+                        var stream = new MediaStream();
+                        connection.preRecorededStream.getTracks().forEach(function(track) {
+                            stream.addTrack(track);
+                        });
+
                         // attach pre-recorded steam
-                        connection.attachStreams.push(connection.preRecorededStream);
+                        connection.attachStreams.push(stream);
                         connection.onstream({
                             userid: connection.userid,
                             extra: connection.extra,
                             type: 'local',
-                            stream: connection.preRecorededStream,
+                            stream: stream,
                             mediaElement: video
                         });
 
@@ -188,8 +198,6 @@
             // ......................................................
             // ..................RTCMultiConnection Code.............
             // ......................................................
-
-            var connection = new RTCMultiConnection();
 
             connection.dontCaptureUserMedia = true;
 
